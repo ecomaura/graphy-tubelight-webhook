@@ -10,33 +10,39 @@ module.exports = async function handler(req, res) {
     // ✏️ YOUR 4 SETTINGS — ONLY EDIT THESE
     // ═══════════════════════════════════════════
 
-    const IS_TEST_MODE = false; // 🔁 change to false when going live
-    const TEST_PHONE = '919930XXXXXX'; // ✏️ your WhatsApp number (91 + 10 digits, no + or spaces)
-    const LOGIN_LINK = 'https://YOUR-SITE.graphy.com/login'; // ✏️ your Graphy login URL
-    const TEMPLATE_NAME = 'payment_success'; // ✏️ your approved Tubelight template name
+    const IS_TEST_MODE = false;
+    const TEST_PHONE = '919930XXXXXX';
+    const LOGIN_LINK = 'https://YOUR-SITE.graphy.com/login'; // ✏️
+    const TEMPLATE_NAME = 'payment_success'; // ✏️
 
     // ═══════════════════════════════════════════
     // DO NOT EDIT ANYTHING BELOW THIS LINE
     // ═══════════════════════════════════════════
 
-    // Extract student details from Graphy payload
+    // Log incoming payload
+    console.log('📩 Graphy Payload:', JSON.stringify(body));
+
+    // Extract student details
     const name = body?.Name || body?.data?.Name || 'Student';
     const phone = body?.Mobile || body?.data?.Mobile || '';
+
+    console.log('👤 Name:', name);
+    console.log('📱 Phone:', phone);
 
     if (!phone && !IS_TEST_MODE) {
       return res.status(400).json({ error: 'No phone number found' });
     }
 
-    // Format phone: remove +, spaces, ensure 91 prefix
+    // Format phone
     const cleanPhone = phone.replace(/\D/g, '');
     const realPhone = cleanPhone.startsWith('91')
       ? cleanPhone
       : '91' + cleanPhone;
 
-    // Use test number or real student number
     const formattedPhone = IS_TEST_MODE ? TEST_PHONE : realPhone;
+    console.log('📞 Formatted Phone:', formattedPhone);
 
-    // Step 1: Login to Tubelight to get token
+    // Step 1: Login to Tubelight
     const loginRes = await fetch(
       'https://portal.tubelightcommunications.com/api/authentication/login',
       {
@@ -50,13 +56,19 @@ module.exports = async function handler(req, res) {
     );
 
     const loginData = await loginRes.json();
+    console.log('🔐 Tubelight Login Response:', JSON.stringify(loginData));
+
     const token = loginData?.token || loginData?.data?.token;
+    console.log('🎟️ Token:', token ? 'FOUND ✅' : 'NOT FOUND ❌');
 
     if (!token) {
-      return res.status(500).json({ error: 'Tubelight login failed' });
+      return res.status(500).json({ 
+        error: 'Tubelight login failed',
+        loginResponse: loginData 
+      });
     }
 
-    // Step 2: Send WhatsApp message
+    // Step 2: Send WhatsApp
     const msgRes = await fetch(
       'https://portal.tubelightcommunications.com/whatsapp/api/v1/send',
       {
@@ -78,9 +90,12 @@ module.exports = async function handler(req, res) {
     );
 
     const msgData = await msgRes.json();
+    console.log('📨 WhatsApp Send Response:', JSON.stringify(msgData));
+
     return res.status(200).json({ success: true, response: msgData });
 
   } catch (err) {
+    console.log('❌ Error:', err.message);
     return res.status(500).json({ error: err.message });
   }
 }
