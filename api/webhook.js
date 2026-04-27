@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(200).json({ status: 'Webhook is live!' });
   }
@@ -6,20 +6,35 @@ export default async function handler(req, res) {
   try {
     const body = req.body;
 
-    // Extract student details from Graphy payload
-    const name = body?.data?.name || body?.name || 'Student';
-    const phone = body?.data?.phone || body?.phone || '';
-    const loginLink = 'https://www.finearn.in/ // 🔁 Replace this
+    // ═══════════════════════════════════════════
+    // ✏️ YOUR 4 SETTINGS — ONLY EDIT THESE
+    // ═══════════════════════════════════════════
 
-    if (!phone) {
+    const IS_TEST_MODE = false; // 🔁 change to false when going live
+    const TEST_PHONE = '919930XXXXXX'; // ✏️ your WhatsApp number (91 + 10 digits, no + or spaces)
+    const LOGIN_LINK = 'https://YOUR-SITE.graphy.com/login'; // ✏️ your Graphy login URL
+    const TEMPLATE_NAME = 'payment_success'; // ✏️ your approved Tubelight template name
+
+    // ═══════════════════════════════════════════
+    // DO NOT EDIT ANYTHING BELOW THIS LINE
+    // ═══════════════════════════════════════════
+
+    // Extract student details from Graphy payload
+    const name = body?.Name || body?.data?.Name || 'Student';
+    const phone = body?.Mobile || body?.data?.Mobile || '';
+
+    if (!phone && !IS_TEST_MODE) {
       return res.status(400).json({ error: 'No phone number found' });
     }
 
     // Format phone: remove +, spaces, ensure 91 prefix
     const cleanPhone = phone.replace(/\D/g, '');
-    const formattedPhone = cleanPhone.startsWith('91')
+    const realPhone = cleanPhone.startsWith('91')
       ? cleanPhone
       : '91' + cleanPhone;
+
+    // Use test number or real student number
+    const formattedPhone = IS_TEST_MODE ? TEST_PHONE : realPhone;
 
     // Step 1: Login to Tubelight to get token
     const loginRes = await fetch(
@@ -33,6 +48,7 @@ export default async function handler(req, res) {
         }),
       }
     );
+
     const loginData = await loginRes.json();
     const token = loginData?.token || loginData?.data?.token;
 
@@ -52,10 +68,10 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           to: [formattedPhone],
           message: {
-            template_name: 'payment_success', // 🔁 Replace this
+            template_name: TEMPLATE_NAME,
             language: 'en',
             type: 'template',
-            body_params: [name, loginLink],
+            body_params: [name, LOGIN_LINK],
           },
         }),
       }
