@@ -58,7 +58,7 @@ module.exports = async function handler(req, res) {
     const loginData = await loginRes.json();
     console.log('🔐 Tubelight Login Response:', JSON.stringify(loginData));
 
-    const token = loginData?.token || loginData?.data?.token;
+    const token = loginData?.accessToken || loginData?.token || loginData?.data?.token;
     console.log('🎟️ Token:', token ? 'FOUND ✅' : 'NOT FOUND ❌');
 
     if (!token) {
