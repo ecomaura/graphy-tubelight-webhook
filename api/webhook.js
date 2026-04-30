@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
 
     const IS_TEST_MODE = false;
     const TEST_PHONE = '919930XXXXXX';
-    const LOGIN_LINK = 'https://YOUR-SITE.graphy.com/login'; // ✏️
+    const LOGIN_LINK = 'https://www.graphy.com'; // ✏️
     const TEMPLATE_NAME = 'payment_success_utility'; // ✏️
 
     // ═══════════════════════════════════════════
